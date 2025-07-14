@@ -413,7 +413,7 @@ end
 ---@return string?
 function linkUtils:GetBattlePetName(speciesID)
     if not speciesID then return end
-    local name = C_PetJournal.GetPetInfoBySpeciesID(2032)
+    local name = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
     return name
 end
 
