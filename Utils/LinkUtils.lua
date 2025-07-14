@@ -296,6 +296,9 @@ function linkUtils:RebuildLink(linkObj, callback)
     local translated = linkObj.text or ""
 
     local rebuildCallback = function (newName)
+        if linkObj.text ~= newName then
+            newName = ("[%s]"):format(newName)
+        end
         callback(LinkUtil.FormatLink(linkObj.type, newName, linkObj.options))
     end
 
