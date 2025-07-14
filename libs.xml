@@ -1,0 +1,4 @@
+<Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+    <script file="Libs\RasuForge-GetLib/RasuForge-GetLib.lua" />
+    <Include file="Libs\RasuLibs/RasuLib.xml" />
+</Ui>

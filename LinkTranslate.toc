@@ -1,0 +1,8 @@
+## Interface: 110105, 110107
+## Version: 1.0.0
+## Title: Custom POI's
+## Author: Rasu | Larsj_02
+## DefaultState: enabled
+## IconTexture: Interface\Addons\CustomPOI\Media\Textures\logo.tga
+
+embed.xml

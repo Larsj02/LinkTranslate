@@ -1,0 +1,10 @@
+{
+    "Lua.diagnostics.globals": [
+        "SecondsFormatterMixin",
+        "SlashCmdList",
+        "hash_SlashCmdList",
+        "ChatFrame_AddMessageEventFilter",
+        "ChatFrame_AddMessage",
+        "LinkUtil"
+    ]
+}
