@@ -2,7 +2,6 @@
 local Private = select(2, ...)
 
 local const = Private.constants or {}
-local addon = Private.Addon or {}
 
 ---@diagnostic disable-next-line: undefined-field
 local linkUtil = _G.LinkUtil or {}
@@ -291,10 +290,14 @@ function linkUtils:GetLinkObj(link)
 end
 
 ---@param linkObj LinkObject
----@return boolean? success, string? link
-function linkUtils:RebuildLink(linkObj)
+---@param callback fun(newLink: string)
+function linkUtils:RebuildLink(linkObj, callback)
     if not linkObj or not linkObj.type then return end
     local translated = linkObj.text or ""
+
+    local rebuildCallback = function (newName)
+        callback(LinkUtil.FormatLink(linkObj.type, newName, linkObj.options))
+    end
 
     if linkObj.type == "achievement" then
         ---@cast linkObj AchievementLinkObject
@@ -320,10 +323,72 @@ function linkUtils:RebuildLink(linkObj)
         ---@cast linkObj CurrencyLinkObject
         local currencyName = self:GetCurrencyName(linkObj.id)
         if currencyName then translated = currencyName end
-        -- TODO: Continue from dungeonScore
+    elseif linkObj.type == "dungeonScore" then
+        ---@cast linkObj DungeonScoreLinkObject
+        translated = DUNGEON_SCORE
+    elseif linkObj.type == "enchant" then
+        ---@cast linkObj EnchantLinkObject
+        --TODO: Implement
+    elseif linkObj.type == "garrfollower" then
+        ---@cast linkObj GarrfollowerLinkObject
+        local followerName = self:GetFollowerName(linkObj.followerID)
+        if followerName then translated = followerName end
+    elseif linkObj.type == "garrfollowerability" then
+        ---@cast linkObj GarrfollowerabilityLinkObject
+        local followerAbilityName = self:GetFollowerAbilityName(linkObj.abilityID)
+        if followerAbilityName then translated = followerAbilityName end
+    elseif linkObj.type == "garrmission" then
+        ---@cast linkObj GarrmissionLinkObject
+        local missionName = self:GetMissionName(linkObj.missionID)
+        if missionName then translated = missionName end
+    elseif linkObj.type == "instancelock" then
+        ---@cast linkObj InstancelockLinkObject
+        local instanceName = self:GetInstanceName(linkObj.instanceID)
+        if instanceName then translated = instanceName end
+    elseif linkObj.type == "item" then
+        ---@cast linkObj ItemLinkObject
+        self:GetAsyncItemName(linkObj.itemString, rebuildCallback)
+        return
+    elseif linkObj.type == "journal" then
+        ---@cast linkObj JournalLinkObject
+        local journalName = self:GetJournalName(linkObj.journalType, linkObj.journalID)
+        if journalName then translated = journalName end
+    elseif linkObj.type == "keystone" then
+        ---@cast linkObj KeystoneLinkObject
+        local keystoneName = self:GetKeystoneName(linkObj.challengeModeID)
+        if keystoneName then translated = keystoneName end
+    elseif linkObj.type == "levelup" then
+        ---@cast linkObj LevelupLinkObject
+        translated = PLAYER_LEVEL_UP
+    elseif linkObj.type == "mawpower" then
+        ---@cast linkObj MawpowerLinkObject
+        --TODO: Implement
+    elseif linkObj.type == "quest" then
+        ---@cast linkObj QuestLinkObject
+        self:GetAsyncQuestName(linkObj.questID, rebuildCallback)
+    elseif linkObj.type == "spell" then
+        ---@cast linkObj SpellLinkObject
+        self:GetAsyncSpellName(linkObj.spellId, rebuildCallback)
+        return
+    elseif linkObj.type == "trade" then
+        ---@cast linkObj TradeLinkObject
+        local tradeskillName = self:GetTradeskillName(linkObj.skillLineID)
+        if tradeskillName then translated = tradeskillName end
+    elseif linkObj.type == "transmogappearance" then
+        ---@cast linkObj TransmogappearanceLinkObject
+        --TODO: Implement
+    elseif linkObj.type == "transmogillusion" then
+        ---@cast linkObj TransmogillusionLinkObject
+        --TODO: Implement
+    elseif linkObj.type == "transmogset" then
+        ---@cast linkObj TransmogsetLinkObject
+        --TODO: Implement
+    elseif linkObj.type == "worldmap" then
+        ---@cast linkObj WorldmapLinkObject
+        translated = MAP_PIN_HYPERLINK
     end
 
-    return true, LinkUtil.FormatLink(linkObj.type, translated, linkObj.options)
+    rebuildCallback(translated)
 end
 
 ---@param achievementID number
@@ -378,4 +443,83 @@ function linkUtils:GetCurrencyName(currencyID)
     local info = C_CurrencyInfo.GetCurrencyInfo(currencyID)
     if not info then return end
     return info.name
+end
+
+function linkUtils:GetFollowerName(followerID)
+    if not followerID then return end
+    local follower = C_Garrison.GetFollowerInfo(followerID)
+    if not follower then return end
+    return follower.name
+end
+
+function linkUtils:GetFollowerAbilityName(abilityID)
+    if not abilityID then return end
+    return C_Garrison.GetFollowerAbilityName(abilityID)
+end
+
+function linkUtils:GetMissionName(missionID)
+    if not missionID then return end
+    local mission = C_Garrison.GetBasicMissionInfo(missionID)
+    if not mission then return end
+    return mission.name
+end
+
+function linkUtils:GetInstanceName(instanceID)
+    if not instanceID then return end
+    local journalInstanceID = C_EncounterJournal.GetInstanceForGameMap(instanceID)
+    if not journalInstanceID then return end
+    local instanceName = EJ_GetInstanceInfo(journalInstanceID)
+    return instanceName
+end
+
+function linkUtils:GetJournalName(journalType, journalID)
+    if not (journalType and journalID) then return end
+    local instanceID, encounterID, sectionID, tierIndex = EJ_HandleLinkPath(journalType, journalID)
+    if sectionID then
+        local sectionInfo = C_EncounterJournal.GetSectionInfo(sectionID)
+        if not sectionInfo then return end
+        return sectionInfo.title
+    end
+    if encounterID then
+        local encounterName = EJ_GetEncounterInfo(encounterID)
+        return encounterName
+    end
+    if instanceID then
+        local instanceName = EJ_GetInstanceInfo(instanceID)
+        return instanceName
+    end
+end
+
+function linkUtils:GetKeystoneName(challengeModeID, level)
+    if not (challengeModeID and level) then return end
+    local mapName = C_ChallengeMode.GetMapUIInfo(challengeModeID)
+    if not mapName then return end
+    return CHALLENGE_MODE_KEYSTONE_HYPERLINK:format(mapName, level)
+end
+
+function linkUtils:GetTradeskillName(skillLineID)
+    if not skillLineID then return end
+    return C_TradeSkillUI.GetTradeSkillDisplayName(skillLineID)
+end
+
+function linkUtils:GetAsyncItemName(itemString, callback)
+    local item = Item:CreateFromItemLink(itemString)
+
+    item:ContinueOnItemLoad(function()
+        callback(item:GetItemName())
+    end)
+end
+
+function linkUtils:GetAsyncQuestName(questID, callback)
+    QuestEventListener:AddCallback(questID, function()
+        callback(C_QuestLog.GetTitleForQuestID(questID))
+    end)
+end
+
+function linkUtils:GetAsyncSpellName(spellID, callback)
+    local spell = Spell:CreateFromSpellID(spellID)
+
+    spell:ContinueOnSpellLoad(function()
+        callback(spell:GetSpellName())
+    end)
 end

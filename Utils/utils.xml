@@ -1,4 +1,5 @@
 <Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+    <Script file="GUIDUtils.lua" />
     <Script file="LinkUtils.lua" />
     <Script file="ChatUtils.lua" />
 </Ui>

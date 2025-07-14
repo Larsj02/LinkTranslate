@@ -1,8 +1,6 @@
 ---@class AddonPrivate
 local Private = select(2, ...)
 
-local const = Private.constants or {}
-local addon = Private.Addon or {}
 local linkUtils = Private.LinkUtils or {}
 
 ---@class ChatUtils
@@ -19,27 +17,60 @@ function chatUtils:GetLinks(msg)
     return links
 end
 
-function chatUtils:AsyncFilterAndSend(sendFunc, frame, msg, ...)
+function chatUtils:MessageQueueCallback(guid, oldLink, newLink)
+    local queueObj = self.messageQueue[guid]
+    if not queueObj then return end
+
+    queueObj.translations[oldLink] = newLink
+    for link, translated in pairs(queueObj.translations) do
+        if not translated then return end
+        queueObj.msg = queueObj.msg:gsub(link, translated)
+    end
+
+    self.messageQueue[guid] = nil
+    queueObj.send(queueObj.msg)
+end
+
+function chatUtils:AddMessageToQueue(msg, links, send)
+    local guid = Private.GUIDUtils:GenerateGUID()
+
+    local translations = {}
+    local queueObj = {
+        msg = msg,
+        send = send,
+        translations = translations
+    }
+    self.messageQueue[guid] = queueObj
+    for _, link in ipairs(links) do
+        translations[link] = false
+        local linkObj = linkUtils:GetLinkObj(link)
+        if linkObj then
+            linkUtils:RebuildLink(linkObj, function(newLink)
+                self:MessageQueueCallback(guid, link, newLink)
+            end)
+        end
+    end
+end
+
+function chatUtils:AsyncFilterAndSend(msg, send)
     if type(msg) == "string" then
         msg = "[DEV] " .. msg
     end
     local links = self:GetLinks(msg)
     if #links > 0 then
-        for _, link in ipairs(links) do
-            local linkObj = linkUtils:GetLinkObj(link)
-            if linkObj then
-                local success, result = linkUtils:RebuildLink(linkObj)
-                -- instead of success and result we should have it as void and just pass a callbackfunc in the rebuildLink so that it can just do the callback and when all links have been called back the chatutils will print the message as usual
-            end
-        end
+        self:AddMessageToQueue(msg, links, send)
+        return
     end
 
-    sendFunc(frame, msg, ...)
+    send(msg)
 end
 
 function chatUtils:GetReplacementFunction(sendFunc)
     return function(frame, msg, ...)
-        self:AsyncFilterAndSend(sendFunc, frame, msg, ...)
+        local args = {...}
+        self:AsyncFilterAndSend(msg, function(newMsg)
+            sendFunc(frame, newMsg, unpack(args))
+        end)
     end
 end
 

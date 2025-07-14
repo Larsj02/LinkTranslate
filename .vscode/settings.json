@@ -5,6 +5,26 @@
         "hash_SlashCmdList",
         "ChatFrame_AddMessageEventFilter",
         "ChatFrame_AddMessage",
-        "LinkUtil"
+        "LinkUtil",
+        "MAP_PIN_HYPERLINK",
+        "PLAYER_LEVEL_UP",
+        "DUNGEON_SCORE",
+        "CHALLENGE_MODE_KEYSTONE_HYPERLINK",
+        "QuestEventListener"
+    ],
+    "Lua.runtime.version": "Lua 5.1",
+    "Lua.runtime.builtin": {
+        "basic": "disable",
+        "debug": "disable",
+        "io": "disable",
+        "math": "disable",
+        "os": "disable",
+        "package": "disable",
+        "string": "disable",
+        "table": "disable",
+        "utf8": "disable"
+    },
+    "Lua.workspace.library": [
+        "~/.vscode-remote/extensions/ketho.wow-api-0.20.8/Annotations/Core"
     ]
 }
