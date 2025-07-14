@@ -9,6 +9,10 @@ local chatUtils = {
 }
 Private.ChatUtils = chatUtils
 
+local function escape_lua_pattern(s)
+   return s:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1")
+end
+
 function chatUtils:GetLinks(msg)
     local links = {}
     for link in msg:gmatch("|H.-|h.-|h") do
@@ -24,7 +28,7 @@ function chatUtils:MessageQueueCallback(guid, oldLink, newLink)
     queueObj.translations[oldLink] = newLink
     for link, translated in pairs(queueObj.translations) do
         if not translated then return end
-        queueObj.msg = queueObj.msg:gsub(link, translated)
+        queueObj.msg = queueObj.msg:gsub(escape_lua_pattern(link), translated)
     end
 
     self.messageQueue[guid] = nil

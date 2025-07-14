@@ -10,7 +10,11 @@
         "PLAYER_LEVEL_UP",
         "DUNGEON_SCORE",
         "CHALLENGE_MODE_KEYSTONE_HYPERLINK",
-        "QuestEventListener"
+        "QuestEventListener",
+        "Item",
+        "Spell",
+        "CreateColorFromHexString",
+        "CreateFromMixins"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
