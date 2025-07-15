@@ -1,8 +1,10 @@
 ## Interface: 110107, 110200
-## Version: 1.0.0
+## Version: 1.0.1
 ## Title: Link Translate
 ## Author: Rasu | Larsj_02
 ## DefaultState: enabled
 ## IconTexture: Interface\Addons\LinkTranslate\Media\Textures\logo.tga
+## X-Curse-Project-ID: 1307425
+## X-Wago-ID: E6gL44K1
 
 embed.xml
