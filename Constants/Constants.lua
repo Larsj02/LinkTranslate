@@ -93,4 +93,5 @@ constants.LINK_STRUCTURES = {
     unit = { "guid", "name" },
     urlIndex = { "index" },
     worldmap = { "uiMapID", "x", "y" },
+    mount = { "spellID", "displayID", "unknown" },
 }

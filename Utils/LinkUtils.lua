@@ -263,7 +263,12 @@ local linkUtil = _G.LinkUtil or {}
 ---@field x number -- X coordinate
 ---@field y number -- Y coordinate
 
----@alias LinkObject AchievementLinkObject|AddonLinkObject|ApiLinkObject|AzessenceLinkObject|BattlepetLinkObject|BattlePetAbilLinkObject|CalendarEventLinkObject|ChannelLinkObject|ClubFinderLinkObject|ClubTicketLinkObject|CommunityLinkObject|ConduitLinkObject|CurrencyLinkObject|DeathLinkObject|DungeonScoreLinkObject|EnchantLinkObject|GarrfollowerLinkObject|GarrfollowerabilityLinkObject|GarrmissionLinkObject|InstancelockLinkObject|ItemLinkObject|JournalLinkObject|KeystoneLinkObject|LevelupLinkObject|LootHistoryLinkObject|MawpowerLinkObject|OutfitLinkObject|PlayerLinkObject|PlayerCommunityLinkObject|BNplayerLinkObject|BNplayerCommunityLinkObject|QuestLinkObject|SpellLinkObject|StorecategoryLinkObject|TalentLinkObject|TalentbuildLinkObject|TradeLinkObject|TransmogappearanceLinkObject|TransmogillusionLinkObject|TransmogsetLinkObject|UnitLinkObject|UrlIndexLinkObject|WorldmapLinkObject
+---@class MountLinkObject : LinkObjectBase
+---@field spellID number -- Spell ID
+---@field displayID number -- Display ID
+---@field unknown unknown -- Additional field, purpose unknown
+
+---@alias LinkObject AchievementLinkObject|AddonLinkObject|ApiLinkObject|AzessenceLinkObject|BattlepetLinkObject|BattlePetAbilLinkObject|CalendarEventLinkObject|ChannelLinkObject|ClubFinderLinkObject|ClubTicketLinkObject|CommunityLinkObject|ConduitLinkObject|CurrencyLinkObject|DeathLinkObject|DungeonScoreLinkObject|EnchantLinkObject|GarrfollowerLinkObject|GarrfollowerabilityLinkObject|GarrmissionLinkObject|InstancelockLinkObject|ItemLinkObject|JournalLinkObject|KeystoneLinkObject|LevelupLinkObject|LootHistoryLinkObject|MawpowerLinkObject|OutfitLinkObject|PlayerLinkObject|PlayerCommunityLinkObject|BNplayerLinkObject|BNplayerCommunityLinkObject|QuestLinkObject|SpellLinkObject|StorecategoryLinkObject|TalentLinkObject|TalentbuildLinkObject|TradeLinkObject|TransmogappearanceLinkObject|TransmogillusionLinkObject|TransmogsetLinkObject|UnitLinkObject|UrlIndexLinkObject|WorldmapLinkObject|MountLinkObject
 
 ---@class LinkUtils
 local linkUtils = {}
@@ -273,7 +278,9 @@ Private.LinkUtils = linkUtils
 ---@return LinkObject?
 function linkUtils:GetLinkObj(link)
     local linkType, linkOptions, displayText = linkUtil.ExtractLink(link)
-    if not linkType then return nil end
+    if not linkType then return end
+    local linkStructure = const.LINK_STRUCTURES[linkType]
+    if not linkStructure then return end
 
     local linkObj = {
         type = linkType,
@@ -281,7 +288,6 @@ function linkUtils:GetLinkObj(link)
         text = displayText or "",
     }
 
-    local linkStructure = const.LINK_STRUCTURES[linkType]
     local optionsList = { linkUtil.SplitLinkOptions(linkOptions or "") }
     for i, value in ipairs(optionsList) do
         if linkType == "item" then
@@ -291,7 +297,11 @@ function linkUtils:GetLinkObj(link)
             linkObj[linkStructure[2]] = linkObj[linkStructure[2]] or {}
             tinsert(linkObj[linkStructure[2]], value)
         else
-            linkObj[linkStructure[i]] = value
+            if linkStructure[i] then
+                linkObj[linkStructure[i]] = value
+            else
+                addon:FPrint("LinkUtils:GetLinkObj: Unhandled link structure for type '%s' with value '%s'", linkType, value)
+            end
         end
     end
 
@@ -408,6 +418,10 @@ function linkUtils:RebuildLink(linkObj, callback)
     elseif linkObj.type == "worldmap" then
         ---@cast linkObj WorldmapLinkObject
         translated = MAP_PIN_HYPERLINK
+    elseif linkObj.type == "mount" then
+        ---@cast linkObj MountLinkObject
+        local mountName = self:GetMountName(linkObj.spellID)
+        if mountName then translated = mountName end
     end
 
     rebuildCallback(translated)
@@ -540,6 +554,14 @@ function linkUtils:GetTransmogsetName(setID)
     local set = C_TransmogSets.GetSetInfo(setID)
     if not set then return end
     return set.name
+end
+
+function linkUtils:GetMountName(spellID)
+    if not spellID then return end
+    local mountID = C_MountJournal.GetMountFromSpell(1217760)
+    if not mountID then return end
+    local mountName = C_MountJournal.GetMountInfoByID(mountID)
+    return mountName
 end
 
 function linkUtils:GetAsyncEnchantName(spellID, callback)

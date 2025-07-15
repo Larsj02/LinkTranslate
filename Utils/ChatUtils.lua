@@ -8,6 +8,7 @@ local chatUtils = {
     messageQueue = {}
 }
 Private.ChatUtils = chatUtils
+RASUX = chatUtils
 
 local function escape_lua_pattern(s)
     return s:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1")
@@ -26,27 +27,30 @@ function chatUtils:MessageQueueCallback(guid, oldLink, newLink)
     if not queueObj then return end
 
     queueObj.translations[oldLink] = newLink
+    local msg = queueObj.msg
     for link, translated in pairs(queueObj.translations) do
         if not translated then return end
-        queueObj.msg = queueObj.msg:gsub(escape_lua_pattern(link), translated)
+        msg = msg:gsub(escape_lua_pattern(link), translated)
     end
 
     self.messageQueue[guid] = nil
-    queueObj.send(queueObj.msg)
+    queueObj.send(msg)
 end
 
 function chatUtils:AddMessageToQueue(msg, links, send)
     local guid = Private.GUIDUtils:GenerateGUID()
 
     local translations = {}
+    for _, link in ipairs(links) do -- We need to iterate over the links once to not cause race conditions
+        translations[link] = false
+    end
     local queueObj = {
         msg = msg,
         send = send,
         translations = translations
     }
     self.messageQueue[guid] = queueObj
-    for _, link in ipairs(links) do
-        translations[link] = false
+    for link in pairs(translations) do
         local linkObj = linkUtils:GetLinkObj(link)
         if linkObj then
             linkUtils:RebuildLink(linkObj, function(newLink)
@@ -130,7 +134,8 @@ function chatUtils:SendTestLinks()
         "|cffff80ff|Htransmogset:1414|h[Fierce Gladiator's Satin Armor (Gladiator)]|h|r",
         "|Hunit:Creature-0-2083-0-7-299-00005A0F91:Young Wolf|hYoung Wolf|h",
         "|HurlIndex:25|h|cff006995Frequently Asked Questions|r|h",
-        "|cffffff00|Hworldmap:84:7222:2550|h[|A:Waypoint-MapPin-ChatIcon:13:13:0:0|a Map Pin Location]|h|r"
+        "|cffffff00|Hworldmap:84:7222:2550|h[|A:Waypoint-MapPin-ChatIcon:13:13:0:0|a Map Pin Location]|h|r",
+        "|cffffd100|Hmount:1217760:126142:|h[The Big G]|h|r",
     }
 
     print("Testing parsing of links:")
@@ -138,6 +143,3 @@ function chatUtils:SendTestLinks()
         print(link)
     end
 end
-
-
-rasuYY = chatUtils

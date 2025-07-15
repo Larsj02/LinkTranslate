@@ -1,8 +1,8 @@
-## Interface: 110105, 110107
+## Interface: 110107, 110200
 ## Version: 1.0.0
-## Title: Custom POI's
+## Title: Link Translate
 ## Author: Rasu | Larsj_02
 ## DefaultState: enabled
-## IconTexture: Interface\Addons\CustomPOI\Media\Textures\logo.tga
+## IconTexture: Interface\Addons\LinkTranslate\Media\Textures\logo.tga
 
 embed.xml
