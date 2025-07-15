@@ -9,45 +9,6 @@ local constants = {}
 Private.constants = constants
 
 constants.ADDON_NAME = ADDON_NAME
-constants.ADDON_VERSION = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version")
-constants.ADDON_MEDIA_PATH = [[Interface\AddOns\]] .. constants.ADDON_NAME .. [[\Media]]
-
-constants.COLORS = {
-    POSITIVE = CreateColorFromHexString("FF2ecc71"),
-    NEUTRAL = CreateColorFromHexString("FFf1c40f"),
-    NEGATIVE = CreateColorFromHexString("FFe74c3c"),
-    WHITE = CreateColorFromHexString("FFecf0f1"),
-    GREY = CreateColorFromHexString("FFbdc3c7"),
-}
-constants.MEDIA = {
-    FONTS = {
-        DEFAULT = constants.ADDON_MEDIA_PATH .. [[\Fonts\Default\NotoSans-Bold.ttf]],
-    },
-    TEXTURES = {
-        LOGO = constants.ADDON_MEDIA_PATH .. [[\Textures\logo.tga]]
-    }
-}
-
-constants.FONT_OBJECTS = {
-    NORMAL = constants.ADDON_NAME .. 'Normal',
-    HEADING = constants.ADDON_NAME .. 'Heading'
-}
-
-do
-    local font = CreateFont(constants.FONT_OBJECTS.NORMAL)
-    font:SetFont(constants.MEDIA.FONTS.DEFAULT, 12, "OUTLINE")
-    font:SetJustifyH("LEFT")
-    font:SetJustifyV("MIDDLE")
-    font:SetTextColor(constants.COLORS.WHITE:GetRGBA())
-end
-do
-    local font = CreateFont(constants.FONT_OBJECTS.HEADING)
-    font:SetFont(constants.MEDIA.FONTS.DEFAULT, 16, "OUTLINE")
-    font:SetJustifyH("LEFT")
-    font:SetJustifyV("MIDDLE")
-    font:SetTextColor(constants.COLORS.WHITE:GetRGBA())
-end
-
 
 constants.LINK_STRUCTURES = {
     achievement = { "achievementID", "guid", "completed", "month", "day", "year", "criteria1", "criteria2", "criteria3", "criteria4" },

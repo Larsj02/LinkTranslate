@@ -4,7 +4,7 @@ local const = Private.constants
 
 local defaultDatabase = {}
 
----@class CustomPOIAddon : RasuAddonBase
+---@class LinkTranslateAddon : RasuAddonBase
 local addon = LibStub("RasuAddon"):CreateAddon(
     const.ADDON_NAME,
     nil,

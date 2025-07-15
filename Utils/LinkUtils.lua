@@ -158,7 +158,7 @@ local linkUtil = _G.LinkUtil or {}
 ---@field itemString string -- Item string
 
 ---@class JournalLinkObject : LinkObjectBase
----@field journalType string -- Journal type
+---@field journalType number -- Journal type
 ---@field journalID number -- Journal ID
 ---@field difficulty number -- Difficulty
 
@@ -275,7 +275,7 @@ local linkUtils = {}
 Private.LinkUtils = linkUtils
 
 ---@param link string
----@return LinkObject?
+---@return LinkObject? linkObj
 function linkUtils:GetLinkObj(link)
     local linkType, linkOptions, displayText = linkUtil.ExtractLink(link)
     if not linkType then return end
@@ -428,7 +428,7 @@ function linkUtils:RebuildLink(linkObj, callback)
 end
 
 ---@param achievementID number
----@return string?
+---@return string? achievementName
 function linkUtils:GetAchievementName(achievementID)
     if not achievementID then return end
     return select(2, GetAchievementInfo(achievementID))
@@ -436,7 +436,7 @@ end
 
 ---@param essenceID number
 ---@param rank number?
----@return string?
+---@return string? essenceName
 function linkUtils:GetEssenceName(essenceID, rank)
     if not essenceID then return end
     if not rank then rank = 1 end
@@ -446,7 +446,7 @@ function linkUtils:GetEssenceName(essenceID, rank)
 end
 
 ---@param speciesID number
----@return string?
+---@return string? battlepetName
 function linkUtils:GetBattlePetName(speciesID)
     if not speciesID then return end
     local name = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
@@ -454,7 +454,7 @@ function linkUtils:GetBattlePetName(speciesID)
 end
 
 ---@param abilityID number
----@return string?
+---@return string? abilityName
 function linkUtils:GetBattlePetAbilityName(abilityID)
     if not abilityID then return end
     local name = C_PetJournal.GetPetAbilityInfo(abilityID)
@@ -463,7 +463,7 @@ end
 
 ---@param conduitID number
 ---@param rank number?
----@return string?
+---@return string? conduitName
 function linkUtils:GetConduitName(conduitID, rank)
     if not conduitID then return end
     if not rank then rank = 1 end
@@ -473,7 +473,7 @@ function linkUtils:GetConduitName(conduitID, rank)
 end
 
 ---@param currencyID number
----@return string?
+---@return string? currencyName
 function linkUtils:GetCurrencyName(currencyID)
     if not currencyID then return end
     local info = C_CurrencyInfo.GetCurrencyInfo(currencyID)
@@ -481,6 +481,8 @@ function linkUtils:GetCurrencyName(currencyID)
     return info.name
 end
 
+---@param followerID number
+---@return string? followerName
 function linkUtils:GetFollowerName(followerID)
     if not followerID then return end
     local follower = C_Garrison.GetFollowerInfo(followerID)
@@ -488,16 +490,22 @@ function linkUtils:GetFollowerName(followerID)
     return follower.name
 end
 
+---@param abilityID number
+---@return string? followerAbilityName
 function linkUtils:GetFollowerAbilityName(abilityID)
     if not abilityID then return end
     return C_Garrison.GetFollowerAbilityName(abilityID)
 end
 
+---@param missionID number
+---@return string? missionName
 function linkUtils:GetMissionName(missionID)
     if not missionID then return end
     return C_Garrison.GetMissionName(missionID)
 end
 
+---@param instanceID number
+---@return string? instanceName
 function linkUtils:GetInstanceName(instanceID)
     if not instanceID then return end
     local journalInstanceID = C_EncounterJournal.GetInstanceForGameMap(instanceID)
@@ -506,6 +514,9 @@ function linkUtils:GetInstanceName(instanceID)
     return instanceName
 end
 
+---@param journalType number
+---@param journalID number
+---@return string? journalName
 function linkUtils:GetJournalName(journalType, journalID)
     if not (journalType and journalID) then return end
     local instanceID, encounterID, sectionID = EJ_HandleLinkPath(journalType, journalID)
@@ -524,6 +535,9 @@ function linkUtils:GetJournalName(journalType, journalID)
     end
 end
 
+---@param challengeModeID number
+---@param level number
+---@return string? keystoneName
 function linkUtils:GetKeystoneName(challengeModeID, level)
     if not (challengeModeID and level) then return end
     local mapName = C_ChallengeMode.GetMapUIInfo(challengeModeID)
@@ -531,6 +545,8 @@ function linkUtils:GetKeystoneName(challengeModeID, level)
     return CHALLENGE_MODE_KEYSTONE_HYPERLINK:format(mapName, level)
 end
 
+---@param talentID number
+---@return string? talentName
 function linkUtils:GetTalentName(talentID)
     if not talentID then return end
     ---@diagnostic disable-next-line: missing-parameter
@@ -538,17 +554,23 @@ function linkUtils:GetTalentName(talentID)
     return name
 end
 
+---@param skillLineID number
+---@return string? tradeskillName
 function linkUtils:GetTradeskillName(skillLineID)
     if not skillLineID then return end
     return C_TradeSkillUI.GetTradeSkillDisplayName(skillLineID)
 end
 
+---@param illusionID number
+---@return string? illusionName
 function linkUtils:GetTransmogillusionName(illusionID)
     if not illusionID then return end
     local name = C_TransmogCollection.GetIllusionStrings(illusionID)
     return name
 end
 
+---@param setID number
+---@return string? setName
 function linkUtils:GetTransmogsetName(setID)
     if not setID then return end
     local set = C_TransmogSets.GetSetInfo(setID)
@@ -556,6 +578,8 @@ function linkUtils:GetTransmogsetName(setID)
     return set.name
 end
 
+---@param spellID number
+---@return string? mountName
 function linkUtils:GetMountName(spellID)
     if not spellID then return end
     local mountID = C_MountJournal.GetMountFromSpell(1217760)
@@ -564,6 +588,8 @@ function linkUtils:GetMountName(spellID)
     return mountName
 end
 
+---@param spellID number
+---@param callback fun(enchantName: string)
 function linkUtils:GetAsyncEnchantName(spellID, callback)
     if not tonumber(spellID) then return end
     spellID = tonumber(spellID)
@@ -575,6 +601,8 @@ function linkUtils:GetAsyncEnchantName(spellID, callback)
     end)
 end
 
+---@param itemString string
+---@param callback fun(itemName: string)
 function linkUtils:GetAsyncItemName(itemString, callback)
     local item = Item:CreateFromItemLink(itemString)
 
@@ -583,6 +611,8 @@ function linkUtils:GetAsyncItemName(itemString, callback)
     end)
 end
 
+---@param questID number
+---@param callback fun(questName: string)
 function linkUtils:GetAsyncQuestName(questID, callback)
     if not tonumber(questID) then return end
     questID = tonumber(questID)
@@ -592,12 +622,16 @@ function linkUtils:GetAsyncQuestName(questID, callback)
     C_QuestLog.RequestLoadQuestByID(questID)
 end
 
+---@param powerID number
+---@param callback fun(mawpowerName: string)
 function linkUtils:GetAsyncMawPowerName(powerID, callback)
     if not tonumber(powerID) then return end
     local spellID = const.MAW_POWERS[tonumber(powerID)]
     self:GetAsyncSpellName(spellID, callback)
 end
 
+---@param spellID number
+---@param callback fun(spellName: string)
 function linkUtils:GetAsyncSpellName(spellID, callback)
     if not tonumber(spellID) then return end
     spellID = tonumber(spellID)
@@ -608,6 +642,8 @@ function linkUtils:GetAsyncSpellName(spellID, callback)
     end)
 end
 
+---@param itemModifiedAppearanceID number
+---@param callback fun(transmogappearanceName: string)
 function linkUtils:GetAsyncTransmogappearanceName(itemModifiedAppearanceID, callback)
     if not tonumber(itemModifiedAppearanceID) then return end
     itemModifiedAppearanceID = tonumber(itemModifiedAppearanceID)

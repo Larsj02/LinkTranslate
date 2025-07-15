@@ -1,5 +1,5 @@
 ## Interface: 110107, 110200
-## Version: 1.0.1
+## Version: 1.0.2
 ## Title: Link Translate
 ## Author: Rasu | Larsj_02
 ## DefaultState: enabled

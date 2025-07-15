@@ -7,7 +7,7 @@ local guidUtils = {
 }
 Private.GUIDUtils = guidUtils
 
----@return string
+---@return string guid
 function guidUtils:GenerateGUID()
     local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
     local guid

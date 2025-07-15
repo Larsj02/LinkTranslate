@@ -8,12 +8,16 @@ local chatUtils = {
     messageQueue = {}
 }
 Private.ChatUtils = chatUtils
-RASUX = chatUtils
 
-local function escape_lua_pattern(s)
-    return s:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1")
+---@param inputString string
+---@return string escapedString
+local function escapePatterns(inputString)
+    local escapedString = inputString:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1")
+    return escapedString
 end
 
+---@param msg string
+---@return string[]
 function chatUtils:GetLinks(msg)
     local links = {}
     for link in msg:gmatch("|H.-|h.-|h") do
@@ -22,6 +26,9 @@ function chatUtils:GetLinks(msg)
     return links
 end
 
+---@param guid string
+---@param oldLink string
+---@param newLink string
 function chatUtils:MessageQueueCallback(guid, oldLink, newLink)
     local queueObj = self.messageQueue[guid]
     if not queueObj then return end
@@ -30,13 +37,16 @@ function chatUtils:MessageQueueCallback(guid, oldLink, newLink)
     local msg = queueObj.msg
     for link, translated in pairs(queueObj.translations) do
         if not translated then return end
-        msg = msg:gsub(escape_lua_pattern(link), translated)
+        msg = msg:gsub(escapePatterns(link), translated)
     end
 
     self.messageQueue[guid] = nil
     queueObj.send(msg)
 end
 
+---@param msg string
+---@param links string[]
+---@param send fun(msg: string)
 function chatUtils:AddMessageToQueue(msg, links, send)
     local guid = Private.GUIDUtils:GenerateGUID()
 
@@ -62,6 +72,8 @@ function chatUtils:AddMessageToQueue(msg, links, send)
     end
 end
 
+---@param msg string
+---@param send fun(msg: string)
 function chatUtils:AsyncFilterAndSend(msg, send)
     local links = self:GetLinks(msg)
     if #links > 0 then
@@ -72,6 +84,8 @@ function chatUtils:AsyncFilterAndSend(msg, send)
     send(msg)
 end
 
+---@param sendFunc fun(frame: Frame, msg: string, ...: any)
+---@return fun(frame: Frame, msg: string, ...: any)
 function chatUtils:GetReplacementFunction(sendFunc)
     return function(frame, msg, ...)
         local args = { ... }
