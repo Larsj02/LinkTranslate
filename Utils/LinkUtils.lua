@@ -1,7 +1,8 @@
 ---@class AddonPrivate
 local Private = select(2, ...)
 
-local const = Private.constants or {}
+local const = Private.constants
+local addon = Private.Addon
 
 ---@diagnostic disable-next-line: undefined-field
 local linkUtil = _G.LinkUtil or {}
@@ -283,7 +284,15 @@ function linkUtils:GetLinkObj(link)
     local linkStructure = const.LINK_STRUCTURES[linkType]
     local optionsList = { linkUtil.SplitLinkOptions(linkOptions or "") }
     for i, value in ipairs(optionsList) do
-        linkObj[linkStructure[i]] = value
+        if linkType == "item" then
+            linkObj.itemString = link
+            break
+        elseif linkType == "addon" and i > 1 then
+            linkObj[linkStructure[2]] = linkObj[linkStructure[2]] or {}
+            tinsert(linkObj[linkStructure[2]], value)
+        else
+            linkObj[linkStructure[i]] = value
+        end
     end
 
     return linkObj
@@ -295,7 +304,7 @@ function linkUtils:RebuildLink(linkObj, callback)
     if not linkObj or not linkObj.type then return end
     local translated = linkObj.text or ""
 
-    local rebuildCallback = function (newName)
+    local rebuildCallback = function(newName)
         if linkObj.text ~= newName then
             newName = ("[%s]"):format(newName)
         end
@@ -331,7 +340,8 @@ function linkUtils:RebuildLink(linkObj, callback)
         translated = DUNGEON_SCORE
     elseif linkObj.type == "enchant" then
         ---@cast linkObj EnchantLinkObject
-        --TODO: Implement
+        self:GetAsyncEnchantName(linkObj.spellID, rebuildCallback)
+        return
     elseif linkObj.type == "garrfollower" then
         ---@cast linkObj GarrfollowerLinkObject
         local followerName = self:GetFollowerName(linkObj.followerID)
@@ -358,34 +368,43 @@ function linkUtils:RebuildLink(linkObj, callback)
         if journalName then translated = journalName end
     elseif linkObj.type == "keystone" then
         ---@cast linkObj KeystoneLinkObject
-        local keystoneName = self:GetKeystoneName(linkObj.challengeModeID)
+        local keystoneName = self:GetKeystoneName(linkObj.challengeModeID, linkObj.level)
         if keystoneName then translated = keystoneName end
     elseif linkObj.type == "levelup" then
         ---@cast linkObj LevelupLinkObject
-        translated = PLAYER_LEVEL_UP
+        translated = LEVEL_GAINED:format(linkObj.level)
     elseif linkObj.type == "mawpower" then
         ---@cast linkObj MawpowerLinkObject
-        --TODO: Implement
+        self:GetAsyncMawPowerName(linkObj.id, rebuildCallback)
+        return
     elseif linkObj.type == "quest" then
         ---@cast linkObj QuestLinkObject
         self:GetAsyncQuestName(linkObj.questID, rebuildCallback)
+        return
     elseif linkObj.type == "spell" then
         ---@cast linkObj SpellLinkObject
         self:GetAsyncSpellName(linkObj.spellId, rebuildCallback)
         return
+    elseif linkObj.type == "talent" then
+        ---@cast linkObj TalentLinkObject
+        local talentName = self:GetTalentName(linkObj.talentID)
+        if talentName then translated = talentName end
     elseif linkObj.type == "trade" then
         ---@cast linkObj TradeLinkObject
         local tradeskillName = self:GetTradeskillName(linkObj.skillLineID)
         if tradeskillName then translated = tradeskillName end
     elseif linkObj.type == "transmogappearance" then
         ---@cast linkObj TransmogappearanceLinkObject
-        --TODO: Implement
+        self:GetAsyncTransmogappearanceName(linkObj.id, rebuildCallback)
+        return
     elseif linkObj.type == "transmogillusion" then
         ---@cast linkObj TransmogillusionLinkObject
-        --TODO: Implement
+        local transmogillusionName = self:GetTransmogillusionName(linkObj.sourceID)
+        if transmogillusionName then translated = transmogillusionName end
     elseif linkObj.type == "transmogset" then
         ---@cast linkObj TransmogsetLinkObject
-        --TODO: Implement
+        local transmogsetName = self:GetTransmogsetName(linkObj.setID)
+        if transmogsetName then translated = transmogsetName end
     elseif linkObj.type == "worldmap" then
         ---@cast linkObj WorldmapLinkObject
         translated = MAP_PIN_HYPERLINK
@@ -462,9 +481,7 @@ end
 
 function linkUtils:GetMissionName(missionID)
     if not missionID then return end
-    local mission = C_Garrison.GetBasicMissionInfo(missionID)
-    if not mission then return end
-    return mission.name
+    return C_Garrison.GetMissionName(missionID)
 end
 
 function linkUtils:GetInstanceName(instanceID)
@@ -477,7 +494,7 @@ end
 
 function linkUtils:GetJournalName(journalType, journalID)
     if not (journalType and journalID) then return end
-    local instanceID, encounterID, sectionID, tierIndex = EJ_HandleLinkPath(journalType, journalID)
+    local instanceID, encounterID, sectionID = EJ_HandleLinkPath(journalType, journalID)
     if sectionID then
         local sectionInfo = C_EncounterJournal.GetSectionInfo(sectionID)
         if not sectionInfo then return end
@@ -500,9 +517,40 @@ function linkUtils:GetKeystoneName(challengeModeID, level)
     return CHALLENGE_MODE_KEYSTONE_HYPERLINK:format(mapName, level)
 end
 
+function linkUtils:GetTalentName(talentID)
+    if not talentID then return end
+    ---@diagnostic disable-next-line: missing-parameter
+    local _, name = GetTalentInfoByID(talentID)
+    return name
+end
+
 function linkUtils:GetTradeskillName(skillLineID)
     if not skillLineID then return end
     return C_TradeSkillUI.GetTradeSkillDisplayName(skillLineID)
+end
+
+function linkUtils:GetTransmogillusionName(illusionID)
+    if not illusionID then return end
+    local name = C_TransmogCollection.GetIllusionStrings(illusionID)
+    return name
+end
+
+function linkUtils:GetTransmogsetName(setID)
+    if not setID then return end
+    local set = C_TransmogSets.GetSetInfo(setID)
+    if not set then return end
+    return set.name
+end
+
+function linkUtils:GetAsyncEnchantName(spellID, callback)
+    if not tonumber(spellID) then return end
+    spellID = tonumber(spellID)
+    local professionInfo = C_TradeSkillUI.GetProfessionInfoByRecipeID(spellID)
+    local profName = professionInfo.professionName or ""
+    self:GetAsyncSpellName(spellID, function (spellName)
+        local translated = ("%s: %s"):format(profName, spellName)
+        callback(translated)
+    end)
 end
 
 function linkUtils:GetAsyncItemName(itemString, callback)
@@ -514,15 +562,37 @@ function linkUtils:GetAsyncItemName(itemString, callback)
 end
 
 function linkUtils:GetAsyncQuestName(questID, callback)
+    if not tonumber(questID) then return end
+    questID = tonumber(questID)
     QuestEventListener:AddCallback(questID, function()
         callback(C_QuestLog.GetTitleForQuestID(questID))
     end)
+    C_QuestLog.RequestLoadQuestByID(questID)
+end
+
+function linkUtils:GetAsyncMawPowerName(powerID, callback)
+    if not tonumber(powerID) then return end
+    local spellID = const.MAW_POWERS[tonumber(powerID)]
+    self:GetAsyncSpellName(spellID, callback)
 end
 
 function linkUtils:GetAsyncSpellName(spellID, callback)
+    if not tonumber(spellID) then return end
+    spellID = tonumber(spellID)
     local spell = Spell:CreateFromSpellID(spellID)
 
     spell:ContinueOnSpellLoad(function()
         callback(spell:GetSpellName())
+    end)
+end
+
+function linkUtils:GetAsyncTransmogappearanceName(itemModifiedAppearanceID, callback)
+    if not tonumber(itemModifiedAppearanceID) then return end
+    itemModifiedAppearanceID = tonumber(itemModifiedAppearanceID)
+    local itemID = C_Transmog.GetItemIDForSource(itemModifiedAppearanceID)
+    local item = Item:CreateFromItemID(itemID)
+
+    item:ContinueOnItemLoad(function()
+        callback(item:GetItemName())
     end)
 end

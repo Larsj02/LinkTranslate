@@ -10,7 +10,7 @@ local chatUtils = {
 Private.ChatUtils = chatUtils
 
 local function escape_lua_pattern(s)
-   return s:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1")
+    return s:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1")
 end
 
 function chatUtils:GetLinks(msg)
@@ -52,14 +52,13 @@ function chatUtils:AddMessageToQueue(msg, links, send)
             linkUtils:RebuildLink(linkObj, function(newLink)
                 self:MessageQueueCallback(guid, link, newLink)
             end)
+        else
+            self:MessageQueueCallback(guid, link, link)
         end
     end
 end
 
 function chatUtils:AsyncFilterAndSend(msg, send)
-    if type(msg) == "string" then
-        msg = "[DEV] " .. msg
-    end
     local links = self:GetLinks(msg)
     if #links > 0 then
         self:AddMessageToQueue(msg, links, send)
@@ -71,7 +70,7 @@ end
 
 function chatUtils:GetReplacementFunction(sendFunc)
     return function(frame, msg, ...)
-        local args = {...}
+        local args = { ... }
         self:AsyncFilterAndSend(msg, function(newMsg)
             sendFunc(frame, newMsg, unpack(args))
         end)
@@ -139,3 +138,6 @@ function chatUtils:SendTestLinks()
         print(link)
     end
 end
+
+
+rasuYY = chatUtils
